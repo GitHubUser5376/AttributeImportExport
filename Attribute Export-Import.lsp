@@ -25,7 +25,7 @@
 ;
 ;;; Objective List ======================================================== Objective List ;;;
 ;;; ====================================================================================== ;;;
-;;; Notes ========================================================================== Notes ;;;
+;;; Comments ==================================================================== Comments ;;;
 
 ; Error and Debugging Help:
 ; If an unforseen error occurs while using one of the "User Interactions" functions, change
@@ -52,7 +52,7 @@
 ; available online. To the extent of my knowledge, all sources where code was copied and 
 ; pasted have a reference either above the function of the code or within the code itself. 
 
-;;; Notes ========================================================================== Notes ;;;
+;;; Comments ==================================================================== Comments ;;;
 ;;; ====================================================================================== ;;;
 ;;; Global Variables ==================================================== Global Variables ;;;
 
@@ -714,16 +714,13 @@
     ;; Creating Log Document
     (setq sRawDateAndTime (rtos (getvar "CDATE") 2 6))
     (setq sDateAndTime (strcat (substr sRawDateAndTime 1 4)))
-    (setq sDateAndTime (strcat sDateAndTime "-"  (substr sRawDateAndTime  5 2)))
-    (setq sDateAndTime (strcat sDateAndTime "-"  (substr sRawDateAndTime  7 2)))
-    (setq sDateAndTime (strcat sDateAndTime "  " (substr sRawDateAndTime 10 2))) 
-    (setq sDateAndTime (strcat sDateAndTime "-"  (substr sRawDateAndTime 12 2)))
-    (setq sDateAndTime (strcat sDateAndTime "-"  (substr sRawDateAndTime 14 2)))
-    (setq sErrDoc (strcat 
-        (fcnTemporaryFolderLocation) "\\" ;----; Folder path
-        (vl-filename-base (vla-get-name DSDoc)); Active Document
-         " - " sDateAndTime ".csv" ;--------; Date and time stamp
-    ));setq<-strcat
+    (setq sDateAndTime (strcat sDateAndTime "-" (substr sRawDateAndTime  5 2)))
+    (setq sDateAndTime (strcat sDateAndTime "-" (substr sRawDateAndTime  7 2)))
+    (setq sDateAndTime (strcat sDateAndTime "_" (substr sRawDateAndTime 10 2))) 
+    (setq sDateAndTime (strcat sDateAndTime "-" (substr sRawDateAndTime 12 2)))
+    (setq sDateAndTime (strcat sDateAndTime "-" (substr sRawDateAndTime 14 2)))
+    (setq sErrDoc (strcat (fcnTemporaryFolderLocation) "\\CADAttInLog - " sDateAndTime ))
+    (setq sErrDoc (strcat sErrDoc " - " (vl-filename-base (vla-get-name DSDoc)) ".csv"))
     (setq *ExternalDocument* (open sErrDoc "w"))
 
     ;; Reporting Errors
@@ -767,7 +764,7 @@
     (if (> iErrBDest 0)  (princ (strcat "Warning: " (itoa iErrBDest)   " block(s) from the specified file were not found in the active document.\n")))
     (if (> iErrBSource 0)(princ (strcat "Warning: " (itoa iErrBSource) " block(s) in the active document were not found in the supplied file.\n")))
     (princ (strcat "Complete: " (itoa iitr1) " of " (itoa (1- (length lErrors))) " block(s) were successfully updated.\n"))
-    (if (not (<= 0 iErrAttDest iErrAttSource iErrBDest iErrBSource))
+    (if (not (>= 0 iErrAttDest iErrAttSource iErrBDest iErrBSource))
         (princ (strcat "The detailed error log can be found here: \n" sErrDoc "\n"))
     );if
 
@@ -1482,6 +1479,47 @@
     
     sReturn
 );defun fcnToString
+;-------------------------------------------------------------------------------
+; fcnClearLogs - Clears ATIN logs in the Temp folders after 2 days in a month.
+;                Between months or years, it increases up to 3 or 4 days due to
+;                uncalculated certainty.
+; Function By: Garrett Beck from Hot Springs, AR, United States
+; Arguments: 0
+;-------------------------------------------------------------------------------
+(defun fcnClearLogs (/ 
+    sRawDateAndTime lDocLogs sDoc
+    iNowYear iNowMonth iNowDay iDocYear iDocMonth iDocDay
+    ); Local Declarations
+
+    ;; Current Date
+    (setq sRawDateAndTime (rtos (getvar "CDATE") 2 6))
+    (setq iNowYear  (atoi (substr sRawDateAndTime 1 4)))
+    (setq iNowMonth (atoi (substr sRawDateAndTime 5 2)))
+    (setq iNowDay   (atoi (substr sRawDateAndTime 7 2)))
+    
+    ;; List of relevant logs
+    (setq lDocLogs (vl-directory-files (fcnTemporaryFolderLocation) "CADAttInLog - *.csv"))
+    (foreach sDoc lDocLogs
+
+        ;; Document Date
+        (setq iDocYear  (atoi (substr (vl-filename-base sDoc) 14 4)))
+        (setq iDocMonth (atoi (substr (vl-filename-base sDoc) 19 2)))
+        (setq iDocDay   (atoi (substr (vl-filename-base sDoc) 22 2)))
+
+        ;; Retension Time (2 day minimum)
+        (if (and (= iNowYear iDocYear)(= iNowMonth iDocMonth)(<= iNowDay (+ 2 iDocDay)))
+            (setq sDoc nil)
+        (if (and (= iNowYear iDocYear)(<= iNowMonth (1+ iDocMonth)(<= iNowDay 2)))
+            (setq sDoc nil)
+        (if (and (<= iNowYear (1+ iDocYear))(= iNowMonth 1)(<= iNowDay 2))
+            (setq sDoc nil)
+        )));if
+
+        ;; Clearing Expired Documents
+        (if sDoc (vl-file-delete (strcat (fcnTemporaryFolderLocation) "\\" sDoc)))
+    );foreach
+    (princ)
+);defun fcnClearLogs
 
 ;;; Other Functions ====================================================== Other Functions ;;;
 ;;; ====================================================================================== ;;;
@@ -1556,6 +1594,7 @@
 
 (setq *ExternalFileType* (fcnLoadDefault "C:ATPort-With"))
 (setq *sErrDumpPath* (strcat (fcnTemporaryFolderLocation) "\\AttErrDumpFile.log"))
+(fcnClearLogs)
 
 ;;; Function Use Global Variables ========================== Function Use Global Variables ;;;
 ;;; ====================================================================================== ;;;
