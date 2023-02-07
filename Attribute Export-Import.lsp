@@ -123,6 +123,7 @@
     ));if<-progn
     (princ)
 );defun ATIN
+
 (defun C:ATIN-All()    
     (fcnResetError)
     (setq *OriginErrState* *error* *error* fcnErrorFunction); Start Error Collection
@@ -136,6 +137,7 @@
     ));if<-progn
     (princ)
 );defun C:ATIN-All
+
 (defun C:ATIN-Name()   
     (fcnResetError)
     (setq fcnErrorFunction fcnErrorFunction)
@@ -150,6 +152,7 @@
     ));if<-progn
     (princ)
 );defun ATIN-All
+
 (defun C:ATIN-Select() 
     (fcnResetError)
     (setq fcnErrorFunction fcnErrorFunction)
@@ -164,6 +167,7 @@
     ));if<-progn
     (princ)
 );defun ATIN-Select
+
 (defun C:ATOUT()       
     (fcnResetError)
     (setq *OriginErrState* *error* *error* fcnErrorFunction); Start Error Collection
@@ -177,6 +181,7 @@
     ));if<-progn
     (princ)
 );defun C:ATOUT
+
 (defun C:ATOUT-All()   
     (fcnResetError)
     (setq *OriginErrState* *error* *error* fcnErrorFunction); Start Error Collection
@@ -190,6 +195,7 @@
     ));if<-progn
     (princ)
 );defun C:ATOUT-All
+
 (defun C:ATOUT-Name()  
     (fcnResetError)
     (setq *OriginErrState* *error* *error* fcnErrorFunction); Start Error Collection
@@ -203,6 +209,7 @@
     ));if<-progn
     (princ)
 );defun C:ATOUT-Name
+
 (defun C:ATOUT-Select()
     (fcnResetError)
     (setq *OriginErrState* *error* *error* fcnErrorFunction); Start Error Collection
@@ -242,6 +249,7 @@
     ));if<-progn
     (princ)
 );defun C:ATPort-Release-Apps
+
 (defun C:ATPort-Release-Apps-Force()
     (if (not *ExcelApp*)
         (setq *ExcelApp* (vlax-get-object "Excel.Application"))
@@ -252,6 +260,7 @@
     (C:ATPort-Release-Apps)
     (princ)
 );defun C:ATPort-Release-Apps-Force
+
 (defun C:ATPort-Reset-Settings()
     (fcnMemoryLocation T)
     (princ "\nMemory settings have been reset to their default values:")
@@ -874,6 +883,8 @@
     ;; Initializing
     (setq attList nil)
     (setq ssAttributes (vlax-invoke objBlock 'GetAttributes))
+    (setq ssAttributes (vlax-safearray->list ssAttributes))
+    (setq ssAttributes (mapcar 'vlax-variant-value ssAttributes))
     
     ;; Creating list
     ; (princ "\n-------------------------------------\n")
@@ -1017,7 +1028,7 @@
     sName sValue ;-----------------------------; values from the list input variable
     lAttributes ObjAtt attTag attList ;--------; Block Attributes
     iItr1 iMax OrigErrMsg ;--------------------; Miscellaneous
-    bFindNext attValue sBlkHandle sBlkName lReturnError
+    bFindNext attValue lReturnError
     ); Variable Declarations
     
     ;; Error Message - Start
@@ -1029,6 +1040,9 @@
     (setq sName (nth 0 lNameValue));; Matching Name
     (setq sValue (nth 1 lNameValue)); New value
     (setq lAttributes (vlax-invoke objBlock 'GetAttributes)); Exsisting attributes
+    (setq lAttributes (vlax-safearray->list lAttributes))
+    (setq lAttributes (mapcar 'vlax-variant-value lAttributes))
+
     (setq iItr1 -1)
     (setq iMax (length lAttributes))
     (setq attList nil)
@@ -1050,8 +1064,6 @@
     );while
 
     ;; Error Message
-    (setq sBlkHandle (vla-get-handle objBlock))
-    (setq sBlkName (vla-get-Name objBlock))
     (if bFindNext
         (setq lReturnError (list sName "Found" "Missing"))
         (setq lReturnError (list sName "Found" "Found"))
@@ -1083,6 +1095,8 @@
     ;; Initializing Blocks
     (setq objBlock (vlax-ename->vla-object ssEName));-------; Converts entity into object
     (setq lAttributes (vlax-invoke objBlock 'GetAttributes)); Exsisting attributes
+    (setq lAttributes (vlax-safearray->list lAttributes))
+    (setq lAttributes (mapcar 'vlax-variant-value lAttributes))
     (setq iMaxObj (length lAttributes))
     (setq iItr1 -1)
 
