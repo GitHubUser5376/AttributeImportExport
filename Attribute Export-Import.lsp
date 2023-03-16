@@ -1614,10 +1614,12 @@
 ;;; ====================================================================================== ;;;
 ;;; Messages ==================================================================== Messages ;;;
 
-(princ (strcat "Additional attribute Import and Export options have been added. Type"
-            " ATHELP to see the list of added commands from this lsp file."
-            "\nATOUT is set to export into " *ExternalFileType* " files. This can be"
-            " changed with ATPORT-WITH.\n"))
+(princ (strcat 
+    "Additional attribute Import and Export options have been added. Type "
+    "ATHELP to see the list of added commands from this lsp file. "
+    "\nATOUT is set to export into " *ExternalFileType* " files. This can be "
+    "changed with ATPORT-WITH. \n"
+));princ<-strcat
 
 ;;; Messages ==================================================================== Messages ;;;
 ;;; ====================================================================================== ;;;
