@@ -1,5 +1,5 @@
 # AttributeImportExport
-Seemlessly transfer attributes between an external document (csv, txt, and xlsx) and cad software
+Seemlessly transfer attributes between an external document (csv or txt) and cad software
 
 The "Attribute Export-Import.lsp" file contains the code for importing and exporting attributes from blocks. 
 To run this within the CAD software, download the file, then load the file into the CAD application as an 
