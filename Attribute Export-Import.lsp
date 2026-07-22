@@ -894,7 +894,7 @@
         (setq attTag (vla-get-tagstring ssAtt))
         (setq attValue (vla-get-textstring ssAtt))
         (setq attList (append attList (list (list attTag attValue))))
-
+        
         ; ;; Debug Print
         (if *bProgrammerDebug* (setq *sErrorMessage* (strcat 
             *sErrorMessage* "\nattTag : " (fcnToString attTag)
@@ -905,7 +905,7 @@
         ; (princ (strcat "attTag : "))   (princ attTag)   (terpri)
         ; (princ (strcat "attValue : ")) (princ attValue) (terpri)
         ; (princ "-------------------------------------\n")
-    );while
+    );foreach
     
     ;; Error Message - End
     (setq *sErrorMessage* OrigErrMsg)
