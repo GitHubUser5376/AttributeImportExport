@@ -516,13 +516,16 @@
     (setq lExternalList (list sValue))
 
     ;; Each Block
-    (terpri)
     (if *bProgrammerDebug* (fcnBuildError "fcnMainExport - Blocks" 0))
     (foreach lBlock lBodyList
         (setq sHandle (nth 0 lBlock))
         (setq sBlkName (nth 1 lBlock))
-        (setq lAttriList (nth 2 lBlock))
-        (setq sValue (strcat sHandle sDelim sBlkName))
+        (setq lAttriList (nth 5 lBlock))
+        (setq sValue (strcat "BLKID-" sHandle sDelim sBlkName ; "BLKID-" stops Excel from converting ##E## into scientific notation
+            sDelim (nth 2 lBlock); X Position
+            sDelim (nth 3 lBlock); Y Position 
+            sDelim (nth 4 lBlock); Z Position
+        ));setq<-strcat
 
         ;; Looping through titles
         (setq iItr1 1); Skipping Handle and Blockname
@@ -682,11 +685,19 @@
 
         ;; Block Details
         (setq lAttriValues (nth iItr1 lRawInput))
-        (setq sBlkHandle (nth 0 lAttriValues))
+        (setq sBlkHandle (if (= (strcase (substr (nth 0 lAttriValues) 0 6)) "BLKID-"); "BLKID-" stops Excel from converting ##E## into scientific notation
+            (progn
+                (setq 
+                    lRawInput (subst (subst (substr (nth 0 lAttriValues) 7)(nth 0 lAttriValues) lAttriValues) lAttriValues lRawInput)
+                );setq
+                (substr (nth 0 lAttriValues) 7)
+            );progn
+            (nth 0 lAttriValues)
+        ));setq<-if
         (setq sBlkName (nth 1 lAttriValues))
 
         ;; Each Attribute
-        (setq iItr2 1)
+        (setq iItr2 4); Skipping XYZ Position data (Read Only)
         (setq lNewAttris (list))
         (while (> (length lAttriValues) (setq iItr2 (1+ iItr2))) 
 
@@ -796,7 +807,7 @@
     ssEName sHandle sBlockName ;-----------; Selection Set and String variables
     objBlock lBlockAttri lBlocksWithAttris ; Creating Attribute Lists per Block
     lAttNames AttList OrigErrMsg sProgress
-    AttName AttDup bAttNew lMasterList
+    lCoords AttName AttDup bAttNew lMasterList
     ); Miscellaneous
     
     ;; Error Message - Start
@@ -810,7 +821,7 @@
     (setq iMax (sslength SelectionSet))
     (setq lBlocksWithAttris nil)
     (setq sBlockName nil)
-    (setq lAttNames (list "BLOCKNAME" "HANDLE")); order is reversed after while loop
+    (setq lAttNames (list "Z POS" "Y POS" "X POS" "BLOCKNAME" "HANDLE")); order is reversed after while loop
 
     ;; Creating Attribute Lists per Block
     (terpri); Progress notification
@@ -820,10 +831,15 @@
         (setq ssEName (ssname SelectionSet iItr1));-------; Single Entity
         (setq sHandle (cdr (assoc 5 (entget ssEName))));--; Block's Handle
         (setq sBlockName (cdr (assoc 2 (entget ssEName)))); Block's Name
+        (setq lCoords (mapcar ;---------------------------; Block's X Y Z coord
+            (function (lambda (x1)(rtos x1 2 16)))
+            (cdr (assoc 10 (entget ssEName)))
+        ));setq<-mapcar
         (setq objBlock (vlax-ename->vla-object ssEName));-; Converts entity into object
         (setq lBlockAttri (fcnGetAttributes objBlock));---; List of attributes from object
-        (setq lBlocksWithAttris (append lBlocksWithAttris  
-            (list (list sHandle sBlockName lBlockAttri)))); Combining Informtion into one list 
+        ((setq lBlocksWithAttris (append lBlocksWithAttris 
+            (list (list sHandle sBlockName (nth 0 lCoords)
+            (nth 1 lCoords)(nth 2 lCoords) lBlockAttri)))); Combining Informtion into one list 
         
         ;; Creating List of attribute names
         (foreach AttList lBlockAttri
@@ -884,7 +900,7 @@
     (setq attList nil)
     (setq ssAttributes (vlax-invoke objBlock 'GetAttributes))
     (setq ssAttributes (vlax-safearray->list ssAttributes))
-    (setq ssAttributes (mapcar 'vlax-variant-value ssAttributes))
+    ; (setq ssAttributes (mapcar 'vlax-variant-value ssAttributes))
     
     ;; Creating list
     ; (princ "\n-------------------------------------\n")
@@ -933,10 +949,10 @@
     (if *bProgrammerDebug* (fcnBuildError "fcnModBlockAtt - Start" 1))
     (setq OrigErrMsg *sErrorMessage*)
     (setq *sErrorMessage* "\nAn error occured while updating the specified blocks.")
-
+    
     ; ;; Selection set of blocks
     ; (setq ssBlocks (ssget "x" (list (cons 0 "INSERT"))))
-
+    
     ;; Initializing Vriables
     (setq iItr1 -1)
     (setq iMaxss (sslength ssBlocks))
@@ -1041,7 +1057,7 @@
     (setq sValue (nth 1 lNameValue)); New value
     (setq lAttributes (vlax-invoke objBlock 'GetAttributes)); Exsisting attributes
     (setq lAttributes (vlax-safearray->list lAttributes))
-    (setq lAttributes (mapcar 'vlax-variant-value lAttributes))
+    ; (setq lAttributes (mapcar 'vlax-variant-value lAttributes))
 
     (setq iItr1 -1)
     (setq iMax (length lAttributes))
@@ -1096,7 +1112,7 @@
     (setq objBlock (vlax-ename->vla-object ssEName));-------; Converts entity into object
     (setq lAttributes (vlax-invoke objBlock 'GetAttributes)); Exsisting attributes
     (setq lAttributes (vlax-safearray->list lAttributes))
-    (setq lAttributes (mapcar 'vlax-variant-value lAttributes))
+    ; (setq lAttributes (mapcar 'vlax-variant-value lAttributes))
     (setq iMaxObj (length lAttributes))
     (setq iItr1 -1)
 
@@ -1462,7 +1478,7 @@
 ; Syntax example: (fcnToString 1234.00) = "1234"
 ; Syntax example: (fcnToString "  Testing Function  ") = "Testing Function"
 ;-------------------------------------------------------------------------------
-(defun fcnToString (InputValue / sReturn OrigErrMsg)
+(defun fcnToString (InputValue / fcnPrecisionTrim sReturn OrigErrMsg)
 
     ;; Error Message - Start
     (if *bProgrammerDebug* (fcnBuildError "fcnToString - Start" 1))
