@@ -528,7 +528,7 @@
         ));setq<-strcat
 
         ;; Looping through titles
-        (setq iItr1 1); Skipping Handle and Blockname
+        (setq iItr1 4); Skipping Handle, Blockname, XYZ position.
         (while (> (length lTitleList)(setq iItr1 (1+ iItr1)))
             (setq sName (nth iItr1 lTitleList))
 
@@ -824,7 +824,6 @@
     (setq lAttNames (list "Z POS" "Y POS" "X POS" "BLOCKNAME" "HANDLE")); order is reversed after while loop
 
     ;; Creating Attribute Lists per Block
-    (terpri); Progress notification
     (while (> iMax (setq iItr1 (1+ iItr1)))
 
         ;; Creating Attribute Lists per Block
@@ -837,7 +836,7 @@
         ));setq<-mapcar
         (setq objBlock (vlax-ename->vla-object ssEName));-; Converts entity into object
         (setq lBlockAttri (fcnGetAttributes objBlock));---; List of attributes from object
-        ((setq lBlocksWithAttris (append lBlocksWithAttris 
+        (setq lBlocksWithAttris (append lBlocksWithAttris 
             (list (list sHandle sBlockName (nth 0 lCoords)
             (nth 1 lCoords)(nth 2 lCoords) lBlockAttri)))); Combining Informtion into one list 
         
